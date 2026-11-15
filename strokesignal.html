@@ -278,12 +278,14 @@ function drawEEG(cv, sess, trial, tau, scale) {
 
 /* ---------- static story trial: most confident correct LEFT trial of the first session ---------- */
 const s0 = D.sessions[0];
-const story = s0.trials.filter((t) => t.truth === 1 && t.pred === 1).sort((a, b) => b.pLeft - a.pLeft)[0];
+const okLeft = s0.trials.filter((t) => t.truth === 1 && t.pred === 1).sort((a, b) => b.pLeft - a.pLeft);
+const story = okLeft[Math.floor(okLeft.length / 2)];   // the median-confidence correct left trial, not the most flattering one
 const storyScale = sessScale(s0);
 function drawStory() { drawEEG($('eegStatic'), s0, story, T1, storyScale); }
-$('eegStaticCap').textContent = 'One recorded trial from patient P1: the cue asked for the left hand, and the imagery window is shaded. Chart paper style is how EEG is read clinically.';
+$('eegStaticCap').textContent = 'A typical recorded trial from patient P1 (median confidence among correct left trials): the cue asked for the left hand, and the imagery window is shaded. Chart paper style is how EEG is read clinically.';
 $('sFill').style.width = pct(story.pLeft) + '%';
-$('sTxt').textContent = 'reads LEFT, ' + pct(story.pLeft) + '% sure';
+const conf = (p) => (p >= 0.995 ? 'more than 99' : String(pct(p)));
+$('sTxt').textContent = 'reads LEFT, ' + conf(story.pLeft) + '% sure';
 addEventListener('resize', () => { drawStory(); drawEvidence(); });
 
 /* ---------- evidence ---------- */
@@ -310,7 +312,7 @@ function drawEvidence() {
 drawEvidence();
 let hi = 0, hiN = 0;
 E.forEach((s) => { const b = s.calibration[s.calibration.length - 1]; if (b && b.n) { hiN += b.n; hi += Math.round(b.hit * b.n); } });
-$('evCalib').textContent = 'When the model was at least 90 percent sure, it was right in ' + hi + ' of ' + hiN + ' trials (' + pct(hi / hiN) + ' percent), so its confidence is usable.';
+$('evCalib').textContent = 'When the model was at least 90 percent sure, it was right in ' + hi + ' of ' + hiN + ' trials (' + pct(hi / hiN) + ' percent). A high reading is a fair sign, but it is a rough guide, not a calibrated probability.';
 const ks = [10, 20, 30, 40, 60];
 $('evCurve').querySelector('thead').innerHTML = '<tr><th>Session</th>' + ks.map((k) => '<th>' + k + '</th>').join('') + '<th>all</th></tr>';
 $('evCurve').querySelector('tbody').innerHTML = E.map((s) => {
@@ -348,7 +350,7 @@ function decide() {
   const det = t.pLeft >= 0.5 ? 'left' : 'right', ok = det === instr(t);
   results[ti] = ok ? 1 : 0; done++; if (ok) correct++;
   $('lFill').style.width = pct(t.pLeft) + '%';
-  $('lTxt').textContent = 'reads ' + det.toUpperCase() + ', ' + pct(Math.max(t.pLeft, 1 - t.pLeft)) + '% sure';
+  $('lTxt').textContent = 'reads ' + det.toUpperCase() + ', ' + conf(Math.max(t.pLeft, 1 - t.pLeft)) + '% sure';
   const moved = mode === 'protocol' ? (ok ? det : null) : det;
   if (moved) { tgt[moved] = 1; tgt[moved === 'left' ? 'pl' : 'pr'] = 1; }
   $('note').textContent = mode === 'protocol'
