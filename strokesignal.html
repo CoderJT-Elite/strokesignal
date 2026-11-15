@@ -507,7 +507,7 @@ function frame(now) {
   drawEEG($('eegLive'), sess, sess.trials[ti], tau, scale);
   requestAnimationFrame(frame);
 }
-function claimArm() { if (!tryActive) { tryActive = true; clearSweep(); restPose(); } }
+function claimArm() { if (!tryActive) { tryActive = true; clearSweep(); restPose(); setStep('try'); } }
 $('play').onclick = () => {
   claimArm();
   if (done === sess.trials.length) resetSession(+$('sess').value);
