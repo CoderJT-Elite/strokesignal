@@ -78,6 +78,7 @@
   .bs-note { font: 500 14px var(--sans); opacity: .55; margin-top: 1.6em; }
   .bs-view { position: relative; height: min(86vh, 100%); min-height: 320px; }
   .bs-view canvas { width: 100% !important; height: 100% !important; }
+  .bs-view canvas.bs-hud { position: absolute; left: 0; bottom: 0; width: 100% !important; height: 30% !important; pointer-events: none; }
   .bs-lab { position: absolute; transform: translate(10px, -50%); font: 700 15px var(--sans); color: var(--stim); background: rgba(13,13,13,.7); padding: 2px 8px; pointer-events: none; opacity: 0; transition: opacity .4s; white-space: nowrap; }
   @media (max-width: 900px) {
     .bs-stick { grid-template-columns: 1fr; grid-template-rows: 46% 54%; padding: 0 20px; }
@@ -272,11 +273,13 @@
           <li>Sixteen electrodes sit on the scalp and listen.</li>
           <li>An amplifier digitises every channel 256 times a second.</li>
           <li>C3 and C4 sit over the two motor areas. Imagining a hand movement quiets the rhythm on the opposite side.</li>
-          <li>The model sees C4 go quiet and reads left hand. The arm answers.</li>
+          <li>These are the real C3 and C4 traces from a stroke patient. The model sees C4 go quiet and reads left hand.</li>
+          <li>The arm answers. <a href="#try" style="color:var(--stim)">Run it yourself</a></li>
         </ol>
         <p class="bs-note">Stylised illustration of the setup.</p>
       </div>
       <div class="bs-view" id="bsView" aria-hidden="true">
+        <canvas id="bsHud" class="bs-hud"></canvas>
         <span class="bs-lab" id="lblC3">C3</span><span class="bs-lab" id="lblC4">C4</span><span class="bs-lab" id="lblAmp">amplifier</span>
       </div>
     </div>
@@ -587,6 +590,32 @@ if (sec && getComputedStyle(sec).display !== 'none') {
     const view = document.getElementById('bsView'), items = [...document.querySelectorAll('#bsSteps li')], track = sec.querySelector('.bs-track');
     const labels = { C3: document.getElementById('lblC3'), C4: document.getElementById('lblC4'), amp: document.getElementById('lblAmp') };
     let shown = 0;
+    const D0 = window.STROKE_DATA, hud = document.getElementById('bsHud'), hx = hud.getContext('2d');
+    const trial = D0 ? (D0.sessions[0].trials.filter((t) => t.truth === 1 && t.pred === 1).sort((a, c) => a.pLeft - c.pLeft)[Math.floor(D0.sessions[0].trials.filter((t) => t.truth === 1 && t.pred === 1).length * 0.6)]) : null;
+    function drawHud(p) {
+      if (!trial) return;
+      const dpr = Math.min(devicePixelRatio || 1, 2), W = hud.clientWidth, H = hud.clientHeight;
+      if (hud.width !== Math.round(W * dpr)) { hud.width = Math.round(W * dpr); hud.height = Math.round(H * dpr); }
+      hx.setTransform(dpr, 0, 0, dpr, 0, 0); hx.clearRect(0, 0, W, H);
+      const a = Math.min(1, Math.max(0, (p - 0.5) / 0.08)); if (a <= 0) return;
+      hx.globalAlpha = a; hx.fillStyle = 'rgba(13,13,13,.78)'; hx.fillRect(0, 0, W, H);
+      const n = trial.c3.length, t0 = D0.traceStart, fs = D0.traceFs, tEnd = t0 + (n - 1) / fs;
+      const sweep = Math.min(1, Math.max(0, (p - 0.52) / 0.3)), upto = Math.floor(sweep * (n - 1));
+      const x = (i) => 10 + (W - 20) * i / (n - 1), tx = (t) => 10 + (W - 20) * (t - t0) / (tEnd - t0);
+      hx.fillStyle = 'rgba(242,169,59,.14)'; hx.fillRect(tx(D0.imageryFrom), 0, tx(Math.min(tEnd, D0.imageryTo)) - tx(D0.imageryFrom), H);
+      const amp = Math.max(...trial.c3.map(Math.abs), ...trial.c4.map(Math.abs)) || 1;
+      [['c3', 0.3, '#F2A93B', 'C3'], ['c4', 0.72, '#FFF4E6', 'C4']].forEach(([k, yc, col, nm]) => {
+        hx.strokeStyle = col; hx.lineWidth = 1.6; hx.beginPath();
+        for (let i = 0; i <= upto; i++) { const y = H * yc - (trial[k][i] / amp) * H * 0.2; if (i) hx.lineTo(x(i), y); else hx.moveTo(x(i), y); }
+        hx.stroke(); hx.fillStyle = col; hx.font = '700 13px Archivo, sans-serif'; hx.fillText(nm, 12, H * yc - H * 0.2);
+      });
+      hx.fillStyle = '#FFF4E6'; hx.font = '600 12px Archivo, sans-serif'; hx.fillText('real recording, patient 1, imagining the left hand', 12, H - 8);
+      const dd = Math.min(1, Math.max(0, (p - 0.82) / 0.1));
+      if (dd > 0) { const bw = Math.min(260, W * 0.4); hx.fillStyle = '#FFF4E6'; hx.fillRect(W - bw - 12, 12, bw, 10);
+        hx.fillStyle = '#FF4B1F'; hx.fillRect(W - bw - 12, 12, bw * trial.pLeft * dd, 10);
+        hx.fillStyle = '#FFF4E6'; hx.font = '700 15px Archivo, sans-serif'; hx.textAlign = 'right'; hx.fillText('reads LEFT hand, ' + (trial.pLeft * 100 >= 99 ? 'more than 99' : Math.round(trial.pLeft * 100)) + '% sure', W - 12, 42); hx.textAlign = 'left'; }
+      hx.globalAlpha = 1;
+    }
     const b = createBrain(view, {
       onStep: (s) => items.forEach((li, i) => li.classList.toggle('on', i === s)),
       onLabel: (n, x, y, ok) => { const l = labels[n]; l.style.left = x + 'px'; l.style.top = y + 'px'; l.style.opacity = ok && shown > (n === 'amp' ? 0.42 : 0.58) ? 1 : 0; }
@@ -601,6 +630,7 @@ if (sec && getComputedStyle(sec).display !== 'none') {
       const r = track.getBoundingClientRect(), span = Math.max(1, r.height - innerHeight);
       shown = Math.min(1, Math.max(0, -r.top / span));
       b.render(shown, reduce ? 0 : (performance.now() - t0) / 1000);
+      drawHud(shown);
     };
     loop();
   } catch (e) { console.warn('brain scene unavailable', e); sec.style.display = 'none'; }

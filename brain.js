@@ -12,7 +12,41 @@ function vnoise(x, y, z) {
 }
 const sm = (a, b, x) => Math.min(1, Math.max(0, (x - a) / (b - a)));
 
+function ridged(x, y, z) { return 1 - Math.abs(2 * vnoise(x, y, z) - 1); }
 function hemisphere(side) {
+  const g = new THREE.SphereGeometry(1, 220, 160), pos = g.attributes.position, col = new Float32Array(pos.count * 3);
+  const sx = 0.56, sy = 0.78, sz = 1.2, deep = new THREE.Color(0x58353a), mid = new THREE.Color(0xd2aaa8), light = new THREE.Color(0xf3dad3), c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const lat = Math.abs(x);
+    // lobes: narrow frontal pole, full parietal, temporal lobe hanging low and lateral, flat base
+    let ys = sy, zs = sz, xs = sx;
+    zs *= 1 + 0.06 * Math.max(0, z) * (y > 0 ? 1 : 0);
+    if (z > 0.5) xs *= 1 - 0.18 * (z - 0.5);
+    const temporal = Math.exp(-(((z + 0.05) / 0.55) ** 2)) * Math.exp(-(((y + 0.55) / 0.4) ** 2)) * lat;
+    let Y = y * ys;
+    if (y < -0.3) Y = -0.3 * ys + (y + 0.3) * ys * 0.55;
+    // domain-warped folds
+    const wx = (vnoise(x * 1.7 + 4, y * 1.7, z * 1.7) - 0.5) * 0.9, wy = (vnoise(x * 1.7, y * 1.7 + 7, z * 1.7) - 0.5) * 0.9, wz = (vnoise(x * 1.7, y * 1.7, z * 1.7 + 3) - 0.5) * 0.9;
+    const px = (x + wx + side * 3.1) * 3.3, py = (y + wy) * 3.3, pz = (z + wz) * 3.3;
+    const f1 = ridged(px, py, pz), f2 = ridged(px * 2.1 + 9, py * 2.1, pz * 2.1), fold = 0.65 * f1 + 0.35 * f2;
+    // named grooves: lateral fissure and central sulcus
+    const lf = Math.exp(-(((y + 0.12 - 0.22 * z) / 0.07) ** 2)) * (z > -0.55 && z < 0.8 ? 1 : 0) * smoothLat(lat);
+    const cs = Math.exp(-(((z - 0.1 + 0.28 * (0.9 - y)) / 0.045) ** 2)) * (y > 0.05 ? 1 : 0);
+    const d = 1 + 0.085 * fold - 0.11 * lf - 0.07 * cs + 0.1 * temporal;
+    let X = x * xs * d; Y = Y * d; const Z = z * zs * d;
+    if (side * X < 0) X *= 0.05;
+    pos.setXYZ(i, X + side * 0.04, Y - 0.1 * temporal, Z);
+    const shade = Math.min(1, Math.max(0, fold * 1.15 - 0.25)), gr = Math.min(1, lf + cs);
+    c.copy(deep).lerp(mid, Math.min(1, shade * 2)).lerp(light, Math.max(0, shade * 2 - 1)).lerp(deep, gr * 0.7);
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.35 }));
+}
+function smoothLat(l) { return Math.min(1, Math.max(0, (l - 0.35) / 0.3)); }
+function hemisphereOld(side) {
   const g = new THREE.SphereGeometry(1, 150, 110), pos = g.attributes.position, col = new Float32Array(pos.count * 3);
   const sx = 0.56, sy = 0.8, sz = 1.18, deep = new THREE.Color(0x4a2326), light = new THREE.Color(0xeab5ad), c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
@@ -44,7 +78,7 @@ export function createBrain(el, opts = {}) {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(34, 1, 0.1, 50);
   scene.add(new THREE.HemisphereLight(0xfff0e6, 0x2a1a1a, 1.1));
   const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(3, 4, 3); scene.add(key);
-  const rim = new THREE.DirectionalLight(0xf2a93b, 1.2); rim.position.set(-4, 1, -3); scene.add(rim);
+  const rim = new THREE.DirectionalLight(0xffd9b0, 0.6); rim.position.set(-4, 1, -3); scene.add(rim);
 
   const brain = new THREE.Group();
   const hl = hemisphere(-1), hr = hemisphere(1);
@@ -134,10 +168,10 @@ export function createBrain(el, opts = {}) {
     });
     const ang = -0.75 + p * 2.6, elev = 0.42 - p * 0.12, dist = 6.2;
     camera.position.set(Math.sin(ang) * Math.cos(elev) * dist, Math.sin(elev) * dist + 0.2, Math.cos(ang) * Math.cos(elev) * dist);
-    camera.lookAt(0, 0.1, -0.2);
+    camera.lookAt(0, -0.35, -0.2);
     renderer.render(scene, camera);
     project(byName.C3.glow.position, 'C3'); project(byName.C4.glow.position, 'C4'); project(device.position, 'amp');
-    const s = p < 0.12 ? 0 : p < 0.34 ? 1 : p < 0.55 ? 2 : p < 0.76 ? 3 : 4;
+    const s = p < 0.12 ? 0 : p < 0.3 ? 1 : p < 0.46 ? 2 : p < 0.62 ? 3 : p < 0.8 ? 4 : 5;
     if (s !== step) { step = s; if (opts.onStep) opts.onStep(s); }
   }
   return { render, resize };
