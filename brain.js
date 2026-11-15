@@ -67,7 +67,40 @@ function hemisphereOld(side) {
 // 10-20 style positions: [name, colatitude from the top (deg), azimuth from the front, positive = right (deg)]
 const SITES = [['Fp1', 75, -20], ['Fp2', 75, 20], ['F7', 75, -55], ['F3', 40, -45], ['F4', 40, 45], ['F8', 75, 55], ['T7', 75, -90], ['C3', 40, -90],
   ['Cz', 0, 0], ['C4', 40, 90], ['T8', 75, 90], ['P3', 40, -135], ['Pz', 40, 180], ['P4', 40, 135], ['O1', 75, -160], ['O2', 75, 160]];
-const RAD = new THREE.Vector3(1.14, 1.1, 1.44);
+const RAD = new THREE.Vector3(1.17, 1.0, 1.46);
+
+// Real anatomy: outline baked from BodyParts3D cerebral-hemisphere meshes (radius map), with procedural gyri added.
+function buildReal(map, nt, np) {
+  const g = new THREE.SphereGeometry(1, 280, 200), pos = g.attributes.position, col = new Float32Array(pos.count * 3);
+  const deep = new THREE.Color(0x58353a), mid = new THREE.Color(0xd2aaa8), light = new THREE.Color(0xf3dad3), c = new THREE.Color();
+  const at = (i, j) => map[Math.min(nt - 1, Math.max(0, i)) * np + ((j % np) + np) % np] / 10000;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const th = Math.acos(Math.min(1, Math.max(-1, y))), ph = (Math.atan2(x, z) + 2 * Math.PI) % (2 * Math.PI);
+    const fi = th / Math.PI * nt - 0.5, fj = ph / (2 * Math.PI) * np - 0.5, i0 = Math.floor(fi), j0 = Math.floor(fj), a = fi - i0, b = fj - j0;
+    const R = (at(i0, j0) * (1 - b) + at(i0, j0 + 1) * b) * (1 - a) + (at(i0 + 1, j0) * (1 - b) + at(i0 + 1, j0 + 1) * b) * a;
+    const X = x * R, Y = y * R, Z = z * R, yu = Y / 0.9, zu = Z / 1.4, lat = Math.abs(X) / 1.08;
+    const wx = (vnoise(X * 1.6 + 4, Y * 1.6, Z * 1.6) - 0.5) * 0.9, wy = (vnoise(X * 1.6, Y * 1.6 + 7, Z * 1.6) - 0.5) * 0.9, wz = (vnoise(X * 1.6, Y * 1.6, Z * 1.6 + 3) - 0.5) * 0.9;
+    const px = (X + wx) * 3.6, py = (Y + wy) * 3.6, pz = (Z + wz) * 3.6;
+    const f1 = ridged(px, py, pz), f2 = ridged(px * 2.2 + 9, py * 2.2, pz * 2.2), fold = 0.65 * f1 + 0.35 * f2;
+    const lf = Math.exp(-(((yu + 0.12 - 0.22 * zu) / 0.07) ** 2)) * (zu > -0.55 && zu < 0.8 ? 1 : 0) * smoothLat(lat);
+    const cs = Math.exp(-(((zu - 0.1 + 0.28 * (0.9 - yu)) / 0.045) ** 2)) * (yu > 0.05 ? 1 : 0);
+    const fis = Math.exp(-((X / 0.03) ** 2)) * Math.min(1, Math.max(0, (yu + 0.1) / 0.5));
+    const d = 0.1 * (fold - 0.55) - 0.1 * lf - 0.07 * cs - 0.14 * fis;
+    pos.setXYZ(i, x * (R + d), y * (R + d), z * (R + d));
+    const shade = Math.min(1, Math.max(0, fold * 1.15 - 0.25)), gr = Math.min(1, lf + cs + fis);
+    c.copy(deep).lerp(mid, Math.min(1, shade * 2)).lerp(light, Math.max(0, shade * 2 - 1)).lerp(deep, gr * 0.75);
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.35 }));
+}
+function partMesh(o, color) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(o.p, 3)); g.setIndex(o.i); g.computeVertexNormals();
+  return new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color, roughness: 0.65, side: THREE.DoubleSide }));
+}
 
 export function createBrain(el, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
@@ -89,6 +122,13 @@ export function createBrain(el, opts = {}) {
   stem.position.set(0, -0.78, -0.3); stem.rotation.x = -0.35;
   brain.add(cb, stem);
   scene.add(brain);
+  const base = opts.base || './assets/brain/';
+  Promise.all([fetch(base + 'brain_radius.bin').then((r) => r.arrayBuffer()), fetch(base + 'brain_radius.json').then((r) => r.json()), fetch(base + 'brain_parts.json').then((r) => r.json())]).then(([buf, meta, parts]) => {
+    const real = buildReal(new Uint16Array(buf), meta.nt, meta.np);
+    brain.remove(hl, hr, cb, stem);
+    [hl, hr, cb, stem].forEach((m) => { m.geometry.dispose(); });
+    brain.add(real, partMesh(parts.cb, 0xc99a95), partMesh(parts.stem, 0xdfb7ae));
+  }).catch((e) => console.warn('real brain mesh unavailable, using procedural', e));
 
   const cap = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshBasicMaterial({ color: 0xfff4e6, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
   cap.scale.copy(RAD).multiplyScalar(0.97); scene.add(cap);
