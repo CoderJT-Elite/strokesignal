@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>strokesignal</title>
+<meta name="description" content="A stroke patient tries to move a hand and nothing answers. strokesignal reads the attempt from EEG and answers it, using recordings from three stroke patients.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Literata:opsz,wght@7..72,400..700&display=swap" rel="stylesheet">
+<script type="importmap">
+{ "imports": { "three": "./assets/vendor/three/build/three.module.js", "three/addons/": "./assets/vendor/three/examples/jsm/" } }
+</script>
+<style>
+  :root {
+    --seamless: #AEBBC0; --ink: #15222B; --bone: #EDE4D0; --muscle: #7B2D2B;
+    --paper: #F7F1EC; --rose: #E9B9B6; --stim: #F2A93B;
+    --serif: Literata, Georgia, "Times New Roman", serif;
+    --sans: Archivo, "Segoe UI", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--seamless); color: var(--ink); font: 400 19px/1.6 var(--serif); }
+  a { color: var(--ink); text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+  .wrap { display: grid; grid-template-columns: minmax(0, 32rem) minmax(0, 1fr); gap: 0; min-height: 100vh; }
+  .text { padding: 0 clamp(20px, 4vw, 64px) 12vh clamp(20px, 5vw, 88px); }
+  .arm { position: sticky; top: 0; height: 100vh; background: var(--seamless); }
+  .arm .stage { position: absolute; inset: 0; }
+  .arm canvas { display: block; touch-action: pan-y; }
+  .arm .names { position: absolute; left: 0; right: 0; bottom: 5vh; display: grid; grid-template-columns: 1fr 1fr; text-align: center; font: 500 16px var(--sans); font-stretch: 100%; pointer-events: none; }
+  .arm .load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 500 16px var(--sans); }
+
+  section { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; padding-block: 9vh; }
+  section.first { min-height: 100vh; }
+  h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.12; margin: 0 0 .6em; letter-spacing: -0.01em; font-optical-sizing: auto; }
+  h1 { font-size: clamp(2.3rem, 4.6vw, 3.5rem); }
+  h2 { font-size: clamp(1.7rem, 3vw, 2.2rem); }
+  p { margin: 0 0 1em; max-width: 34rem; }
+  .small { font-size: 15px; line-height: 1.5; }
+  .lede { font-size: 1.15em; }
+  .figure { font: 700 3.1em/1 var(--sans); font-stretch: 62%; letter-spacing: 0; }
+  .num { font-family: var(--sans); font-stretch: 75%; font-weight: 700; }
+  .src { font: 400 14px/1.45 var(--sans); }
+
+  .chart { display: block; width: 100%; background: var(--paper); border: 1px solid #c9a5a2; margin: 6px 0 14px; }
+  canvas.chart { height: 200px; }
+  .reading { margin: 4px 0 16px; font-family: var(--sans); }
+  .reading .bar { position: relative; height: 12px; background: var(--paper); border: 1px solid var(--ink); }
+  .reading .fill { position: absolute; inset: 0 auto 0 0; background: var(--muscle); width: 50%; }
+  .reading .mid { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; background: var(--ink); }
+  .reading .lab { display: flex; justify-content: space-between; font-size: 15px; margin-top: 6px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 4px 0 14px; font-family: var(--sans); font-size: 16px; }
+  button, select { font: 600 16px var(--sans); color: var(--ink); background: transparent; border: 2px solid var(--ink); border-radius: 2px; padding: 8px 14px; cursor: pointer; min-height: 44px; }
+  button.primary { background: var(--ink); color: var(--bone); }
+  button[aria-pressed="true"] { background: var(--ink); color: var(--bone); }
+  .seg { display: inline-flex; }
+  .seg button + button { border-left-width: 0; }
+  .status { font: 500 17px/1.4 var(--sans); min-height: 2.8em; margin: 0 0 8px; }
+  .scoreline { font: 500 17px var(--sans); }
+  .scoreline .num { font-size: 1.9em; font-stretch: 62%; }
+  .dots { display: flex; flex-wrap: wrap; gap: 3px; margin: 8px 0 14px; }
+  .dot { width: 9px; height: 9px; background: transparent; border: 1px solid var(--ink); }
+  .dot.good { background: var(--ink); }
+  .dot.bad { background: var(--muscle); border-color: var(--muscle); }
+  .dot.now { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+  table { border-collapse: collapse; font: 500 15px var(--sans); width: 100%; margin: 6px 0 12px; }
+  th, td { text-align: right; padding: 5px 8px 5px 0; border-bottom: 1px solid rgba(21,34,43,.35); }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-weight: 700; }
+  dl { margin: 0 0 1em; }
+  dt { font: 700 17px var(--sans); margin-top: .9em; }
+  dd { margin: 2px 0 0; max-width: 34rem; }
+
+  footer { padding: 6vh 0 0; border-top: 1px solid rgba(21,34,43,.45); margin-top: 6vh; }
+
+  @media (max-width: 900px) {
+    body { font-size: 18px; }
+    .wrap { display: flex; flex-direction: column; }
+    .arm { order: -1; height: 40vh; z-index: 3; border-bottom: 1px solid rgba(21,34,43,.35); }
+    .arm .names { bottom: 8px; font-size: 14px; }
+    .text { padding: 0 20px 10vh; }
+    section, section.first { min-height: auto; padding-block: 7vh; }
+    .figure { font-size: 2.6em; }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="text">
+    <section class="first" id="attempt">
+      <h1>A stroke patient tries to move a hand. Nothing happens.</h1>
+      <p class="lede">The brain sends the command. The hand does not answer, so the brain gets no sign that trying worked. strokesignal reads the attempt from the EEG and answers it.</p>
+      <p><span class="figure">795,000</span><br>people in the US have a stroke each year, and worldwide it is almost 12 million new strokes a year.</p>
+      <p class="src">Sources: CDC, Stroke Facts (<a href="https://www.cdc.gov/stroke/data-research/facts-stats/index.html">cdc.gov</a>); World Stroke Organization, Global Stroke Fact Sheet 2025 (<a href="https://www.world-stroke.org">world-stroke.org</a>).</p>
+    </section>
+
+    <section id="signal">
+      <h2>The attempt is visible in the EEG</h2>
+      <p>Imagining a hand movement quiets the rhythm over the motor area that runs that hand. The left hand is run from the right side of the brain (channel C4), the right hand from the left (C3).</p>
+      <canvas class="chart" id="eegStatic" aria-label="EEG from C3 and C4 during one recorded trial"></canvas>
+      <p class="src" id="eegStaticCap"></p>
+    </section>
+
+    <section id="decode">
+      <h2>A small model reads which hand</h2>
+      <p>The model is standard: a band-pass filter at 8 to 30 Hz, common spatial patterns, then a linear classifier. It is trained on each session's calibration run and scored on a test run it never saw.</p>
+      <div class="reading" aria-label="Decoder reading for the recorded trial">
+        <div class="bar"><div class="fill" id="sFill"></div><div class="mid"></div></div>
+        <div class="lab"><span>right hand</span><span id="sTxt"></span><span>left hand</span></div>
+      </div>
+    </section>
+
+    <section id="answer">
+      <h2>The answer arrives at once</h2>
+      <p>When the model reads an attempt, the tendons draw and the fingers close, and a stimulation pulse is shown as the amber line along the tendons. The limb and the pulse are simulated: there is no patient and no stimulator behind this page.</p>
+      <p class="small">Scroll back up and down to see the arm answer again.</p>
+    </section>
+
+    <section id="evidence">
+      <h2>It works on people who had a stroke</h2>
+      <p id="evSummary"></p>
+      <svg class="chart" id="evChart" role="img" aria-label="Accuracy of the decoder for each session with 95 percent intervals"></svg>
+      <p class="src" id="evCap"></p>
+      <p id="evCalib"></p>
+      <table id="evCurve"><thead></thead><tbody></tbody></table>
+      <p class="src">Accuracy on the test run when only the first k calibration trials are used.</p>
+    </section>
+
+    <section id="try">
+      <h2>Drive it yourself</h2>
+      <p>Every trial below is a real recording. Pick a session and watch the model decide.</p>
+      <div class="controls">
+        <label for="sess">Session</label><select id="sess"></select>
+        <button type="button" class="primary" id="play">Play</button>
+        <button type="button" id="next">Next trial</button>
+        <button type="button" id="restart">Restart</button>
+      </div>
+      <div class="controls">
+        <span id="speedLabel">Speed</span>
+        <span class="seg" role="group" aria-labelledby="speedLabel" id="speed"><button type="button" data-s="1" aria-pressed="false">1x</button><button type="button" data-s="2" aria-pressed="false">2x</button><button type="button" data-s="4" aria-pressed="true">4x</button></span>
+        <span id="modeLabel">Feedback</span>
+        <span class="seg" role="group" aria-labelledby="modeLabel" id="mode"><button type="button" data-m="protocol" aria-pressed="true">Therapy protocol</button><button type="button" data-m="real" aria-pressed="false">Real use</button></span>
+      </div>
+      <p class="small" id="modeHelp"></p>
+      <p class="status" id="status" aria-live="polite">Press play.</p>
+      <canvas class="chart" id="eegLive" aria-label="EEG traces from C3 and C4 for the current trial"></canvas>
+      <div class="reading" aria-label="Decoder reading">
+        <div class="bar"><div class="fill" id="lFill"></div><div class="mid"></div></div>
+        <div class="lab"><span>right hand</span><span id="lTxt">waiting</span><span>left hand</span></div>
+      </div>
+      <p class="scoreline"><span class="num" id="accBig">--</span> <span id="accTxt">0 of 0 trials read correctly</span></p>
+      <div class="dots" id="dots" aria-hidden="true"></div>
+      <p class="small" id="note"></p>
+    </section>
+
+    <section id="limits">
+      <h2>What this does not show</h2>
+      <dl>
+        <dt>It is recorded, not live</dt>
+        <dd>The EEG comes from g.tec's stroke-rehab recordings of three patients. Nothing on this page is a live brain.</dd>
+        <dt>It is not a medical device</dt>
+        <dd>The limb and the stimulation are simulated. No patient has used this, and it is not meant for treatment.</dd>
+        <dt>It is not new</dt>
+        <dd>g.tec's recoveriX already does brain-controlled stimulation for stroke rehab in clinics. This is a small, open, readable replay of the idea.</dd>
+        <dt>Three patients prove little</dt>
+        <dd>Accuracy changed by -6, +18 and +2 points between each patient's first and last session. That does not show that the therapy worked.</dd>
+        <dt>Calibration is the cost</dt>
+        <dd>Each session needs about 17 minutes of calibration recording before the model can be used.</dd>
+        <dt>Real use cannot know the instruction</dt>
+        <dd>In the recorded therapy, feedback was given only when the reading matched the instruction. A home system cannot know the instruction, so switch to "Real use" to see wrong guesses move the wrong hand.</dd>
+      </dl>
+      <footer class="small">
+        <p>Data: g.tec Hack The Nest 2026 stroke-rehab dataset (3 patients, 16 channels, 256 Hz). Model and numbers: this repository's <code>export_data.py</code> and <code>evidence.py</code>.</p>
+        <p>Anatomy: BodyParts3D, &copy; The Database Center for Life Science, licensed under <a href="https://creativecommons.org/licenses/by-sa/2.1/jp/">CC Attribution-Share Alike 2.1 Japan</a>. Mitsuhashi et al., Nucleic Acids Research, 2009. <a href="https://lifesciencedb.jp/bp3d/">lifesciencedb.jp/bp3d</a>. The rig in <code>assets/anatomy/rig.json</code> and the derived page are shared under the same license.</p>
+        <p>Built for Hack The Nest 2026 at Eastern Michigan University, Mind and Machine track. <a href="simulator-2d.html">Plain 2D simulator</a>.</p>
+      </footer>
+    </section>
+  </div>
+
+  <div class="arm" id="armCol" aria-label="Simulated forearms and hands with bones and muscles">
+    <div class="stage" id="stage"></div>
+    <div class="names" aria-hidden="true"><span>Left hand</span><span>Right hand</span></div>
+    <div class="load" id="load">Loading anatomy</div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="evidence.js"></script>
+<script type="module">
+import { createArm } from './arm.js';
+const D = window.STROKE_DATA, EV = window.EVIDENCE;
+const $ = (id) => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FS = D.traceFs, T0 = D.traceStart, T1 = 8.0, CUE = D.cueAt, IM0 = D.imageryFrom, IM1 = D.imageryTo;
+const pct = (x) => Math.round(x * 100);
+
+/* ---------- arm ---------- */
+let arm = null;
+const tgt = { left: 0, right: 0, pl: 0, pr: 0 }, cur = { left: 0, right: 0 };
+let tryActive = false;
+try {
+  arm = await createArm($('stage'), { base: 'assets/anatomy/', background: 0xAEBBC0, onProgress: (f) => { $('load').textContent = 'Loading anatomy ' + pct(f) + '%'; } });
+  $('load').remove();
+  if (innerWidth <= 900) arm.controls.enabled = false;
+} catch (e) {
+  $('load').textContent = '3D view needs WebGL. The plain simulator is at simulator-2d.html.';
+  console.error(e);
+}
+let lastT = performance.now();
+function armLoop(now) {
+  const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+  const k = reduce ? 1 : Math.min(1, dt * 7);
+  cur.left += (tgt.left - cur.left) * k; cur.right += (tgt.right - cur.right) * k;
+  if (arm) { arm.set('left', cur.left, tgt.pl); arm.set('right', cur.right, tgt.pr); }
+  requestAnimationFrame(armLoop);
+}
+requestAnimationFrame(armLoop);
+
+/* scripted answer when the "answer" section scrolls in; one orchestrated moment */
+let sweepTimers = [];
+function clearSweep() { sweepTimers.forEach(clearTimeout); sweepTimers = []; }
+function restPose() { tgt.left = 0; tgt.right = 0; tgt.pl = 0; tgt.pr = 0; }
+function sweep() {
+  clearSweep(); restPose();
+  if (reduce) { tgt.left = 1; return; }
+  sweepTimers.push(setTimeout(() => { tgt.left = 1; tgt.pl = 1; }, 400));
+  sweepTimers.push(setTimeout(() => { tgt.pl = 0; }, 2400));
+  sweepTimers.push(setTimeout(() => { tgt.left = 0; }, 4200));
+}
+new IntersectionObserver((es) => {
+  es.forEach((e) => {
+    if (tryActive) return;
+    if (e.target.id === 'answer') { if (e.isIntersecting) sweep(); else if (!e.isIntersecting) { clearSweep(); restPose(); } }
+  });
+}, { threshold: 0.6 }).observe($('answer'));
+
+/* ---------- chart paper ---------- */
+function paper(cx, w, h) {
+  cx.fillStyle = '#F7F1EC'; cx.fillRect(0, 0, w, h);
+  for (let x = 0; x <= w; x += 6) { cx.strokeStyle = (x / 6) % 5 === 0 ? '#E0A29E' : '#EFCFCB'; cx.lineWidth = (x / 6) % 5 === 0 ? 1 : 0.6; cx.beginPath(); cx.moveTo(x + .5, 0); cx.lineTo(x + .5, h); cx.stroke(); }
+  for (let y = 0; y <= h; y += 6) { cx.strokeStyle = (y / 6) % 5 === 0 ? '#E0A29E' : '#EFCFCB'; cx.lineWidth = (y / 6) % 5 === 0 ? 1 : 0.6; cx.beginPath(); cx.moveTo(0, y + .5); cx.lineTo(w, y + .5); cx.stroke(); }
+}
+function sessScale(s) {
+  let sum = 0, n = 0;
+  s.trials.forEach((t) => { [t.c3, t.c4].forEach((a) => a.forEach((v) => { sum += v * v; n++; })); });
+  return Math.sqrt(sum / n) * 3.2;
+}
+function drawEEG(cv, sess, trial, tau, scale) {
+  const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const cx = cv.getContext('2d'); cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  paper(cx, w, h);
+  const X = (t) => 44 + (t - T0) / (T1 - T0) * (w - 54);
+  cx.fillStyle = 'rgba(21,34,43,.10)'; cx.fillRect(X(IM0), 0, X(IM1) - X(IM0), h - 20);
+  cx.strokeStyle = '#15222B'; cx.lineWidth = 1; cx.setLineDash([4, 3]);
+  cx.beginPath(); cx.moveTo(X(CUE), 0); cx.lineTo(X(CUE), h - 20); cx.stroke(); cx.setLineDash([]);
+  cx.fillStyle = '#15222B'; cx.font = '500 12px Archivo, system-ui, sans-serif';
+  cx.fillText('cue', X(CUE) + 4, 13); cx.fillText('imagery window', X(IM0) + 4, 13);
+  for (let s = 0; s <= 8; s += 2) cx.fillText(s + ' s', X(s) - 8, h - 6);
+  cx.fillText('C3', 8, h * 0.3 + 4); cx.fillText('C4', 8, h * 0.66 + 4);
+  [[trial.c3, h * 0.3], [trial.c4, h * 0.66]].forEach(([c, y0]) => {
+    cx.strokeStyle = '#15222B'; cx.lineWidth = 1.3; cx.beginPath();
+    let started = false;
+    for (let i = 0; i < c.length; i++) {
+      const tt = T0 + i / FS; if (tt > tau) break;
+      const x = X(tt), y = y0 - c[i] / scale * (h * 0.2);
+      if (!started) { cx.moveTo(x, y); started = true; } else cx.lineTo(x, y);
+    }
+    cx.stroke();
+  });
+  if (tau < T1) { cx.strokeStyle = '#7B2D2B'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X(tau), 0); cx.lineTo(X(tau), h - 20); cx.stroke(); }
+}
+
+/* ---------- static story trial: most confident correct LEFT trial of the first session ---------- */
+const s0 = D.sessions[0];
+const story = s0.trials.filter((t) => t.truth === 1 && t.pred === 1).sort((a, b) => b.pLeft - a.pLeft)[0];
+const storyScale = sessScale(s0);
+function drawStory() { drawEEG($('eegStatic'), s0, story, T1, storyScale); }
+$('eegStaticCap').textContent = 'One recorded trial from patient P1: the cue asked for the left hand, and the imagery window is shaded. Chart paper style is how EEG is read clinically.';
+$('sFill').style.width = pct(story.pLeft) + '%';
+$('sTxt').textContent = 'reads LEFT, ' + pct(story.pLeft) + '% sure';
+addEventListener('resize', () => { drawStory(); drawEvidence(); });
+
+/* ---------- evidence ---------- */
+const E = EV.sessions;
+const maxP = Math.max(...E.map((s) => s.perm_p));
+$('evSummary').textContent = 'On test runs the model never saw, it picked the hand the patient was asked to imagine in ' + E.map((s) => (s.accuracy * 100).toFixed(1)).join(', ') + ' percent of trials across the six sessions. Chance is 50 percent. A label-shuffle test (5,000 shuffles) gives ' + (maxP < 0.001 ? 'p below 0.001' : 'p at most ' + maxP) + ' in every session.';
+$('evCap').textContent = 'Dots are test accuracy, bars are 95 percent Wilson intervals (80 test trials each), the dashed line is chance. Patient P1, P2, P3, first and last session.';
+function drawEvidence() {
+  const svg = $('evChart'), w = svg.clientWidth || 540, rowH = 30, top = 14, h = top + rowH * E.length + 26, L = 92, R = 40;
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h); svg.setAttribute('height', h);
+  const X = (v) => L + (v - 0.4) / 0.6 * (w - L - R);
+  let o = '';
+  [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].forEach((v) => { o += '<line x1="' + X(v) + '" x2="' + X(v) + '" y1="' + top + '" y2="' + (h - 24) + '" stroke="#EFCFCB"/><text x="' + X(v) + '" y="' + (h - 8) + '" font-family="Archivo,sans-serif" font-size="12" text-anchor="middle" fill="#15222B">' + Math.round(v * 100) + '</text>'; });
+  o += '<line x1="' + X(0.5) + '" x2="' + X(0.5) + '" y1="' + top + '" y2="' + (h - 24) + '" stroke="#7B2D2B" stroke-width="1.5" stroke-dasharray="5 4"/>';
+  E.forEach((s, i) => {
+    const y = top + rowH * i + rowH / 2;
+    o += '<text x="8" y="' + (y + 4) + '" font-family="Archivo,sans-serif" font-size="14" fill="#15222B">' + s.patient + (s.stage === 'pre' ? ' first' : ' last') + '</text>';
+    o += '<line x1="' + X(s.ci95[0]) + '" x2="' + X(s.ci95[1]) + '" y1="' + y + '" y2="' + y + '" stroke="#15222B" stroke-width="2"/>';
+    o += '<circle cx="' + X(s.accuracy) + '" cy="' + y + '" r="5" fill="#15222B"/>';
+    o += '<text x="' + (X(s.ci95[1]) + 6) + '" y="' + (y + 4) + '" font-family="Archivo,sans-serif" font-size="12" fill="#15222B">' + (s.accuracy * 100).toFixed(1) + '</text>';
+  });
+  svg.innerHTML = o;
+}
+drawEvidence();
+let hi = 0, hiN = 0;
+E.forEach((s) => { const b = s.calibration[s.calibration.length - 1]; if (b && b.n) { hiN += b.n; hi += Math.round(b.hit * b.n); } });
+$('evCalib').textContent = 'When the model was at least 90 percent sure, it was right in ' + hi + ' of ' + hiN + ' trials (' + pct(hi / hiN) + ' percent), so its confidence is usable.';
+const ks = [10, 20, 30, 40, 60];
+$('evCurve').querySelector('thead').innerHTML = '<tr><th>Session</th>' + ks.map((k) => '<th>' + k + '</th>').join('') + '<th>all</th></tr>';
+$('evCurve').querySelector('tbody').innerHTML = E.map((s) => {
+  const m = {}; s.learning_curve.forEach((c) => { m[c.trials] = c.accuracy; });
+  const all = s.learning_curve[s.learning_curve.length - 1];
+  return '<tr><td>' + s.patient + (s.stage === 'pre' ? ' first' : ' last') + '</td>' + ks.map((k) => '<td>' + (m[k] != null ? pct(m[k]) : '-') + '</td>').join('') + '<td>' + pct(all.accuracy) + ' (' + all.trials + ')</td></tr>';
+}).join('');
+
+/* ---------- live replay ---------- */
+let sess = D.sessions[0], ti = 0, tau = T0, playing = false, speed = 4, mode = 'protocol', lastFrame = 0;
+let decided = false, correct = 0, done = 0, results = [], scale = 1;
+D.sessions.forEach((s, i) => {
+  const o = document.createElement('option'); o.value = i;
+  o.textContent = s.patient + (s.stage === 'pre' ? ' first session' : ' last session') + ' (' + pct(s.accuracy) + '%)';
+  $('sess').appendChild(o);
+});
+const instr = (t) => (t.truth === 1 ? 'left' : 'right');
+function updScore() {
+  $('accBig').textContent = done ? pct(correct / done) + '%' : '--';
+  $('accTxt').textContent = correct + ' of ' + done + ' trials read correctly';
+  [...$('dots').children].forEach((d, k) => { d.className = 'dot' + (results[k] === 1 ? ' good' : results[k] === 0 ? ' bad' : '') + (k === ti && ti < results.length + 1 && results[k] === undefined ? ' now' : ''); });
+}
+function setTrialUI() {
+  $('lFill').style.width = '50%'; $('lTxt').textContent = 'waiting'; $('note').textContent = '';
+  tgt.left = 0; tgt.right = 0; tgt.pl = 0; tgt.pr = 0;
+}
+function resetSession(i) {
+  sess = D.sessions[i]; ti = 0; tau = T0; decided = false; correct = 0; done = 0; results = [];
+  scale = sessScale(sess);
+  $('dots').innerHTML = sess.trials.map(() => '<span class="dot"></span>').join('');
+  updScore(); setTrialUI();
+}
+function decide() {
+  const t = sess.trials[ti]; decided = true;
+  const det = t.pLeft >= 0.5 ? 'left' : 'right', ok = det === instr(t);
+  results[ti] = ok ? 1 : 0; done++; if (ok) correct++;
+  $('lFill').style.width = pct(t.pLeft) + '%';
+  $('lTxt').textContent = 'reads ' + det.toUpperCase() + ', ' + pct(Math.max(t.pLeft, 1 - t.pLeft)) + '% sure';
+  const moved = mode === 'protocol' ? (ok ? det : null) : det;
+  if (moved) { tgt[moved] = 1; tgt[moved === 'left' ? 'pl' : 'pr'] = 1; }
+  $('note').textContent = mode === 'protocol'
+    ? (ok ? 'Match: the ' + det + ' hand closes and gets a stimulation pulse.' : 'No match (the cue was ' + instr(t).toUpperCase() + '): no feedback, as in the recorded therapy.')
+    : (ok ? 'Correct: the ' + det + ' hand moves.' : 'Wrong guess: the ' + det.toUpperCase() + ' hand moves, but ' + instr(t).toUpperCase() + ' was intended.');
+  updScore();
+}
+function phase() {
+  const t = sess.trials[ti], st = $('status');
+  if (tau < CUE) st.textContent = 'Trial ' + (ti + 1) + ' of ' + sess.trials.length + ': rest.';
+  else if (tau < IM0) st.textContent = 'Cue: imagine moving the ' + instr(t).toUpperCase() + ' hand.';
+  else if (tau < IM1) st.textContent = 'Imagining the ' + instr(t).toUpperCase() + ' hand.';
+  else st.textContent = decided ? 'The model read ' + (t.pLeft >= 0.5 ? 'LEFT' : 'RIGHT') + '.' : 'Reading.';
+}
+function finishTrial() {
+  ti++; tau = T0; decided = false;
+  if (ti >= sess.trials.length) {
+    playing = false; $('play').textContent = 'Play'; ti = sess.trials.length - 1;
+    $('status').textContent = 'Session finished: ' + pct(correct / done) + '% read correctly.';
+    updScore(); return;
+  }
+  setTrialUI(); updScore();
+}
+function frame(now) {
+  if (playing) {
+    tau += Math.min(0.1, (now - lastFrame) / 1000) * speed;
+    if (!decided && tau >= IM1) decide();
+    if (tau >= T1) finishTrial();
+    phase();
+  }
+  lastFrame = now;
+  drawEEG($('eegLive'), sess, sess.trials[ti], tau, scale);
+  requestAnimationFrame(frame);
+}
+function claimArm() { if (!tryActive) { tryActive = true; clearSweep(); restPose(); } }
+$('play').onclick = () => {
+  claimArm();
+  if (done === sess.trials.length) resetSession(+$('sess').value);
+  playing = !playing; $('play').textContent = playing ? 'Pause' : 'Play'; lastFrame = performance.now();
+};
+$('next').onclick = () => { claimArm(); if (!decided && tau < T1) { tau = IM1; decide(); } finishTrial(); phase(); };
+$('restart').onclick = () => { playing = false; $('play').textContent = 'Play'; resetSession(+$('sess').value); $('status').textContent = 'Press play.'; };
+$('sess').onchange = () => $('restart').onclick();
+function seg(id, attr, fn) {
+  $(id).onclick = (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    [...$(id).children].forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    fn(b.getAttribute(attr));
+  };
+}
+seg('speed', 'data-s', (v) => { speed = +v; });
+const helps = {
+  protocol: 'As recorded: feedback only when the reading matches the cue, so a correct attempt is rewarded.',
+  real: 'What a home system would do: it cannot know the cue, so it answers whatever it reads, right or wrong.'
+};
+seg('mode', 'data-m', (v) => { mode = v; $('modeHelp').textContent = helps[v]; });
+$('modeHelp').textContent = helps.protocol;
+addEventListener('keydown', (e) => { if (e.code === 'Space' && !['SELECT', 'BUTTON'].includes(e.target.tagName) && tryActive) { e.preventDefault(); $('play').click(); } });
+/* once the user reaches the "try" section, the replay owns the arm */
+new IntersectionObserver((es) => { es.forEach((e) => { if (e.isIntersecting) claimArm(); else if (!playing) { tryActive = false; } }); }, { threshold: 0.3 }).observe($('try'));
+
+resetSession(0); phase(); drawStory(); requestAnimationFrame(frame);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawStory);
+</script>
+</body>
+</html>

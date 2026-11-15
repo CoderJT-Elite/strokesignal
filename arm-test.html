@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>arm test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #AEBBC0; font: 14px system-ui, sans-serif; color: #15222B; }
+  #stage { position: fixed; inset: 0; }
+  .ctl { position: fixed; left: 16px; bottom: 16px; display: grid; gap: 8px; background: rgba(255,255,255,.6); padding: 10px 14px; }
+  label { display: grid; grid-template-columns: 90px 220px; align-items: center; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./assets/vendor/three/build/three.module.js", "three/addons/": "./assets/vendor/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="stage"></div>
+<div class="ctl"><label>Left hand<input id="l" type="range" min="0" max="1" step="0.01" value="0"></label><label>Right hand<input id="r" type="range" min="0" max="1" step="0.01" value="0"></label><label>Stimulation<input id="p" type="range" min="0" max="1" step="1" value="0"></label><span id="msg">loading…</span></div>
+<script type="module">
+import { createArm } from './arm.js';
+const arm = await createArm(document.getElementById('stage'), { onProgress: (f) => (document.getElementById('msg').textContent = 'loading ' + Math.round(f * 100) + '%') });
+document.getElementById('msg').textContent = 'ready';
+window.arm = arm;
+const upd = () => { const p = +document.getElementById('p').value; arm.set('left', +document.getElementById('l').value, p); arm.set('right', +document.getElementById('r').value, p); };
+['l', 'r', 'p'].forEach((id) => document.getElementById(id).addEventListener('input', upd));
+</script>
+</body>
+</html>

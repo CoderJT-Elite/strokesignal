@@ -1,0 +1,359 @@
+{
+ "note": "Computed from g.tec stroke-rehab recordings; unseen test runs; chance is 0.5.",
+ "sessions": [
+  {
+   "id": "P1_pre",
+   "patient": "P1",
+   "stage": "pre",
+   "n_test": 80,
+   "n_train": 80,
+   "correct": 74,
+   "accuracy": 0.925,
+   "ci95": [
+    0.846,
+    0.965
+   ],
+   "perm_p": 0.0002,
+   "calibration": [
+    {
+     "lo": 0.5,
+     "hi": 0.7,
+     "n": 6,
+     "hit": 0.667
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.9,
+     "n": 8,
+     "hit": 0.75
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 66,
+     "hit": 0.97
+    }
+   ],
+   "learning_curve": [
+    {
+     "trials": 20,
+     "accuracy": 0.8
+    },
+    {
+     "trials": 30,
+     "accuracy": 0.75
+    },
+    {
+     "trials": 40,
+     "accuracy": 0.738
+    },
+    {
+     "trials": 60,
+     "accuracy": 0.875
+    },
+    {
+     "trials": 80,
+     "accuracy": 0.925
+    }
+   ],
+   "train_minutes_estimate": null
+  },
+  {
+   "id": "P1_post",
+   "patient": "P1",
+   "stage": "post",
+   "n_test": 80,
+   "n_train": 80,
+   "correct": 69,
+   "accuracy": 0.863,
+   "ci95": [
+    0.77,
+    0.921
+   ],
+   "perm_p": 0.0002,
+   "calibration": [
+    {
+     "lo": 0.5,
+     "hi": 0.7,
+     "n": 4,
+     "hit": 0.0
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.9,
+     "n": 9,
+     "hit": 0.444
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 67,
+     "hit": 0.97
+    }
+   ],
+   "learning_curve": [
+    {
+     "trials": 10,
+     "accuracy": 0.762
+    },
+    {
+     "trials": 20,
+     "accuracy": 0.875
+    },
+    {
+     "trials": 30,
+     "accuracy": 0.887
+    },
+    {
+     "trials": 40,
+     "accuracy": 0.863
+    },
+    {
+     "trials": 60,
+     "accuracy": 0.887
+    },
+    {
+     "trials": 80,
+     "accuracy": 0.863
+    }
+   ],
+   "train_minutes_estimate": null
+  },
+  {
+   "id": "P2_pre",
+   "patient": "P2",
+   "stage": "pre",
+   "n_test": 80,
+   "n_train": 80,
+   "correct": 65,
+   "accuracy": 0.812,
+   "ci95": [
+    0.713,
+    0.883
+   ],
+   "perm_p": 0.0002,
+   "calibration": [
+    {
+     "lo": 0.5,
+     "hi": 0.7,
+     "n": 9,
+     "hit": 0.444
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.9,
+     "n": 11,
+     "hit": 0.909
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 60,
+     "hit": 0.85
+    }
+   ],
+   "learning_curve": [
+    {
+     "trials": 20,
+     "accuracy": 0.55
+    },
+    {
+     "trials": 30,
+     "accuracy": 0.775
+    },
+    {
+     "trials": 40,
+     "accuracy": 0.7
+    },
+    {
+     "trials": 60,
+     "accuracy": 0.738
+    },
+    {
+     "trials": 80,
+     "accuracy": 0.812
+    }
+   ],
+   "train_minutes_estimate": null
+  },
+  {
+   "id": "P2_post",
+   "patient": "P2",
+   "stage": "post",
+   "n_test": 80,
+   "n_train": 80,
+   "correct": 79,
+   "accuracy": 0.988,
+   "ci95": [
+    0.933,
+    0.998
+   ],
+   "perm_p": 0.0002,
+   "calibration": [
+    {
+     "lo": 0.5,
+     "hi": 0.7,
+     "n": 2,
+     "hit": 1.0
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.9,
+     "n": 3,
+     "hit": 0.667
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 75,
+     "hit": 1.0
+    }
+   ],
+   "learning_curve": [
+    {
+     "trials": 10,
+     "accuracy": 0.675
+    },
+    {
+     "trials": 20,
+     "accuracy": 0.925
+    },
+    {
+     "trials": 30,
+     "accuracy": 0.975
+    },
+    {
+     "trials": 40,
+     "accuracy": 0.988
+    },
+    {
+     "trials": 60,
+     "accuracy": 0.988
+    },
+    {
+     "trials": 80,
+     "accuracy": 0.988
+    }
+   ],
+   "train_minutes_estimate": null
+  },
+  {
+   "id": "P3_pre",
+   "patient": "P3",
+   "stage": "pre",
+   "n_test": 80,
+   "n_train": 80,
+   "correct": 64,
+   "accuracy": 0.8,
+   "ci95": [
+    0.7,
+    0.873
+   ],
+   "perm_p": 0.0002,
+   "calibration": [
+    {
+     "lo": 0.5,
+     "hi": 0.7,
+     "n": 9,
+     "hit": 0.667
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.9,
+     "n": 10,
+     "hit": 0.4
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 61,
+     "hit": 0.885
+    }
+   ],
+   "learning_curve": [
+    {
+     "trials": 10,
+     "accuracy": 0.688
+    },
+    {
+     "trials": 20,
+     "accuracy": 0.675
+    },
+    {
+     "trials": 30,
+     "accuracy": 0.662
+    },
+    {
+     "trials": 40,
+     "accuracy": 0.762
+    },
+    {
+     "trials": 60,
+     "accuracy": 0.838
+    },
+    {
+     "trials": 80,
+     "accuracy": 0.8
+    }
+   ],
+   "train_minutes_estimate": null
+  },
+  {
+   "id": "P3_post",
+   "patient": "P3",
+   "stage": "post",
+   "n_test": 80,
+   "n_train": 80,
+   "correct": 66,
+   "accuracy": 0.825,
+   "ci95": [
+    0.727,
+    0.893
+   ],
+   "perm_p": 0.0002,
+   "calibration": [
+    {
+     "lo": 0.5,
+     "hi": 0.7,
+     "n": 10,
+     "hit": 0.4
+    },
+    {
+     "lo": 0.7,
+     "hi": 0.9,
+     "n": 9,
+     "hit": 0.444
+    },
+    {
+     "lo": 0.9,
+     "hi": 1.0,
+     "n": 61,
+     "hit": 0.951
+    }
+   ],
+   "learning_curve": [
+    {
+     "trials": 20,
+     "accuracy": 0.7
+    },
+    {
+     "trials": 30,
+     "accuracy": 0.775
+    },
+    {
+     "trials": 40,
+     "accuracy": 0.787
+    },
+    {
+     "trials": 60,
+     "accuracy": 0.875
+    },
+    {
+     "trials": 80,
+     "accuracy": 0.825
+    }
+   ],
+   "train_minutes_estimate": null
+  }
+ ]
+}
