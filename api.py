@@ -22,7 +22,8 @@ def build():
     sessions = sorted(db["evidence"].find({}, {"_id": 0}), key=lambda s: s["id"])
     notes = {d["_id"]: d["text"] for d in db["explainers"].find({}) if d.get("text")}
     meta = db["meta"].find_one({"_id": "evidence"}) or {}
-    return json.dumps({"source": "MongoDB Atlas", "note": meta.get("note", ""), "sessions": sessions, "notes": notes}).encode()
+    patients = {d["_id"]: {k: v for k, v in d.items() if k != "_id"} for d in db["patients"].find({})}
+    return json.dumps({"source": "MongoDB Atlas", "note": meta.get("note", ""), "sessions": sessions, "notes": notes, "patients": patients}).encode()
 
 
 class H(BaseHTTPRequestHandler):
