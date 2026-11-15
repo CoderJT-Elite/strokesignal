@@ -2,7 +2,7 @@
 
 A stroke patient tries to move a hand and nothing answers. strokesignal reads the attempt from EEG and answers it, using g.tec's recordings of three stroke patients. Hack The Nest 2026 (Eastern Michigan University), Mind and Machine track. A prototype, not a medical device.
 
-Live: http://64.177.13.118/ (strokesignal.health once DNS is fixed)
+Live: https://strokesignal.health
 
 ## What is on the page
 - A forearm and hand pair rigged from real anatomy (bones, muscles, tendons from BodyParts3D). It stays on screen while you scroll.
