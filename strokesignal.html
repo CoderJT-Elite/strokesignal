@@ -143,6 +143,7 @@
       <div class="controls">
         <span id="speedLabel">Speed</span>
         <span class="seg" role="group" aria-labelledby="speedLabel" id="speed"><button type="button" data-s="1" aria-pressed="false">1x</button><button type="button" data-s="2" aria-pressed="false">2x</button><button type="button" data-s="4" aria-pressed="true">4x</button></span>
+        <button type="button" id="voice" aria-pressed="false" title="Spoken cues, made with ElevenLabs. Best at 1x.">Voice cues: off</button>
         <span id="modeLabel">Feedback</span>
         <span class="seg" role="group" aria-labelledby="modeLabel" id="mode"><button type="button" data-m="protocol" aria-pressed="true">Therapy protocol</button><button type="button" data-m="real" aria-pressed="false">Real use</button></span>
       </div>
@@ -321,9 +322,22 @@ $('evCurve').querySelector('tbody').innerHTML = E.map((s) => {
   return '<tr><td>' + s.patient + (s.stage === 'pre' ? ' first' : ' last') + '</td>' + ks.map((k) => '<td>' + (m[k] != null ? pct(m[k]) : '-') + '</td>').join('') + '<td>' + pct(all.accuracy) + ' (' + all.trials + ')</td></tr>';
 }).join('');
 
+/* ---------- spoken cues (static clips made once with ElevenLabs; off by default) ---------- */
+let voiceOn = false, voiceEl = null;
+function say(name) {
+  if (!voiceOn) return;
+  if (voiceEl && !voiceEl.ended && !voiceEl.paused) return;   // never talk over a clip
+  voiceEl = new Audio('assets/audio/' + name + '.mp3'); voiceEl.play().catch(() => {});
+}
+$('voice').onclick = () => {
+  voiceOn = !voiceOn; $('voice').setAttribute('aria-pressed', String(voiceOn));
+  $('voice').textContent = 'Voice cues: ' + (voiceOn ? 'on' : 'off');
+  voiceEl = null;
+};
+
 /* ---------- live replay ---------- */
 let sess = D.sessions[0], ti = 0, tau = T0, playing = false, speed = 4, mode = 'protocol', lastFrame = 0;
-let decided = false, correct = 0, done = 0, results = [], scale = 1;
+let decided = false, correct = 0, done = 0, results = [], scale = 1, cuedTrial = -1;
 D.sessions.forEach((s, i) => {
   const o = document.createElement('option'); o.value = i;
   o.textContent = s.patient + (s.stage === 'pre' ? ' first session' : ' last session') + ' (' + pct(s.accuracy) + '%)';
@@ -352,6 +366,7 @@ function decide() {
   $('lFill').style.width = pct(t.pLeft) + '%';
   $('lTxt').textContent = 'reads ' + det.toUpperCase() + ', ' + conf(Math.max(t.pLeft, 1 - t.pLeft)) + '% sure';
   const moved = mode === 'protocol' ? (ok ? det : null) : det;
+  say(mode === 'protocol' ? (ok ? 'read_' + det : 'no_match') : (ok ? 'read_' + det : 'wrong_hand'));
   if (moved) { tgt[moved] = 1; tgt[moved === 'left' ? 'pl' : 'pr'] = 1; }
   $('note').textContent = mode === 'protocol'
     ? (ok ? 'Match: the ' + det + ' hand closes and gets a stimulation pulse.' : 'No match (the cue was ' + instr(t).toUpperCase() + '): no feedback, as in the recorded therapy.')
@@ -361,7 +376,7 @@ function decide() {
 function phase() {
   const t = sess.trials[ti], st = $('status');
   if (tau < CUE) st.textContent = 'Trial ' + (ti + 1) + ' of ' + sess.trials.length + ': rest.';
-  else if (tau < IM0) st.textContent = 'Cue: imagine moving the ' + instr(t).toUpperCase() + ' hand.';
+  else if (tau < IM0) { st.textContent = 'Cue: imagine moving the ' + instr(t).toUpperCase() + ' hand.'; if (cuedTrial !== ti) { cuedTrial = ti; say('cue_' + instr(t)); } }
   else if (tau < IM1) st.textContent = 'Imagining the ' + instr(t).toUpperCase() + ' hand.';
   else st.textContent = decided ? 'The model read ' + (t.pLeft >= 0.5 ? 'LEFT' : 'RIGHT') + '.' : 'Reading.';
 }
