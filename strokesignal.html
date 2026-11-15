@@ -23,6 +23,28 @@
   body { margin: 0; background: var(--field); color: var(--ink); font: 500 19px/1.55 var(--sans); }
   .mega { font: 400 clamp(6.5rem, 12vw, 12rem)/.82 var(--serif); letter-spacing: -0.02em; margin: 0 0 .06em -.04em; }
   body.judge .mega { font-size: clamp(4rem, 8vw, 7rem); }
+  #prog { position: fixed; left: 0; top: 0; height: 6px; width: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left; z-index: 50; }
+  .js .rv { opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .js .rv.in { opacity: 1; transform: none; }
+  .pointer { display: flex; align-items: center; gap: 12px; font: 600 20px var(--sans); margin-top: .4em; }
+  .pointer svg, .cue svg { flex: none; }
+  .pointer svg { animation: nudge 1.4s ease-in-out infinite; }
+  .cue { display: flex; align-items: center; gap: 10px; font: 600 16px var(--sans); margin-top: 1.4em; }
+  .cue svg { animation: bob 1.4s ease-in-out infinite; }
+  body.judge .cue { display: none; }
+  @keyframes nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(10px); } }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+  .callouts { position: absolute; inset: 0; pointer-events: none; }
+  .callout { position: absolute; display: flex; align-items: center; gap: 10px; color: var(--cream); font: 600 17px/1.25 var(--sans); max-width: 13rem; opacity: 0; transform: translateX(14px); transition: opacity .5s ease, transform .5s ease; }
+  .callout svg { flex: none; }
+  .callout .ln { stroke-dasharray: 120; stroke-dashoffset: 120; transition: stroke-dashoffset .7s ease .1s; }
+  .arm[data-step="attempt"] .callout.s0, .arm[data-step="decode"] .callout.s1,
+  .arm[data-step="answer"] .callout.s2 { opacity: 1; transform: none; }
+  .arm[data-step="attempt"] .callout.s0 .ln, .arm[data-step="decode"] .callout.s1 .ln,
+  .arm[data-step="answer"] .callout.s2 .ln { stroke-dashoffset: 0; }
+  .arm[data-step="answer"] .callout.d1 { transition-delay: .25s; } .arm[data-step="answer"] .callout.d2 { transition-delay: .55s; } .arm[data-step="answer"] .callout.d3 { transition-delay: .85s; }
+  @media (max-width: 900px) { .callouts { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .pointer svg, .cue svg { animation: none; } .callout, .callout .ln { transition: none; } }
   a { color: var(--ink); text-underline-offset: 3px; }
   a:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
@@ -130,6 +152,7 @@
         <div><span class="figure">94%</span><span class="cap">right when it is sure, on brains it never saw</span></div>
       </div>
       <a class="go" href="#try">Try it on real stroke recordings</a>
+      <div class="cue" aria-hidden="true"><svg width="18" height="26" viewBox="0 0 18 26"><path d="M9 2 V22 M2 15 L9 23 L16 15" fill="none" stroke="#0D0D0D" stroke-width="3"/></svg>Scroll: watch the arm answer</div>
       <p class="src">Sources: CDC, Stroke Facts (<a href="https://www.cdc.gov/stroke/data-research/facts-stats/index.html">cdc.gov</a>); World Stroke Organization, Global Stroke Fact Sheet 2025 (<a href="https://www.world-stroke.org">world-stroke.org</a>). 94%: 367 of 390 trials at 90 percent confidence or more.</p>
     </section>
 
@@ -158,6 +181,7 @@
     <section id="answer">
       <h2>The answer arrives at once</h2>
       <p>When the model reads an attempt, the tendons draw and the fingers close, and a stimulation pulse runs as the amber line along the tendons. This is the moment the brain gets its answer.</p>
+      <p class="pointer"><svg width="56" height="20" viewBox="0 0 56 20" aria-hidden="true"><path d="M2 10 H52 M42 2 L52 10 L42 18" fill="none" stroke="#0D0D0D" stroke-width="3"/></svg>Watch the arm</p>
       <p class="small">Scroll back up and down to see the arm answer again.</p>
     </section>
 
@@ -211,13 +235,34 @@
     </section>
   </div>
 
-  <div class="arm" id="armCol" aria-label="Simulated forearms and hands with bones and muscles">
+  <div class="arm" id="armCol" data-step="attempt" aria-label="Simulated forearms and hands with bones and muscles">
     <div class="stage" id="stage"></div>
     <div class="names" aria-hidden="true"><span>Left hand</span><span>Right hand</span></div>
+    <div class="callouts" aria-hidden="true">
+      <div class="callout s0" style="left: 38%; top: 14%"><svg width="64" height="16" viewBox="0 0 64 16"><path class="ln" d="M62 8 H4 M12 2 L4 8 L12 14" fill="none" stroke="#F2A93B" stroke-width="2.5"/></svg>Real anatomy: 33 bones and muscles, rigged joint by joint</div>
+      <div class="callout s1" style="left: 38%; top: 12%"><svg width="64" height="16" viewBox="0 0 64 16"><path class="ln" d="M62 8 H4 M12 2 L4 8 L12 14" fill="none" stroke="#F2A93B" stroke-width="2.5"/></svg>The model reads the EEG: this is the left hand</div>
+      <div class="callout s2 d1" style="left: 38%; top: 20%"><svg width="64" height="16" viewBox="0 0 64 16"><path class="ln" d="M62 8 H4 M12 2 L4 8 L12 14" fill="none" stroke="#F2A93B" stroke-width="2.5"/></svg>Fingers close</div>
+      <div class="callout s2 d2" style="left: 38%; top: 40%"><svg width="64" height="16" viewBox="0 0 64 16"><path class="ln" d="M62 8 H4 M12 2 L4 8 L12 14" fill="none" stroke="#F2A93B" stroke-width="2.5"/></svg>Tendons draw, a stimulation pulse runs along them</div>
+      <div class="callout s2 d3" style="left: 38%; top: 60%"><svg width="64" height="16" viewBox="0 0 64 16"><path class="ln" d="M62 8 H4 M12 2 L4 8 L12 14" fill="none" stroke="#F2A93B" stroke-width="2.5"/></svg>Flexor muscles swell</div>
+    </div>
     <div class="load" id="load">Loading anatomy</div>
   </div>
 </div>
 
+<div id="prog" aria-hidden="true"></div>
+<script>
+(function () {
+  var bar = document.getElementById('prog');
+  function up() { var h = document.documentElement, p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight); bar.style.transform = 'scaleX(' + p + ')'; }
+  addEventListener('scroll', up, { passive: true }); up();
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  document.documentElement.classList.add('js');
+  var els = [].slice.call(document.querySelectorAll('.text section:not(.first) > *'));
+  els.forEach(function (e, i) { e.classList.add('rv'); e.style.transitionDelay = ((i % 4) * 70) + 'ms'; });
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+  els.forEach(function (e) { io.observe(e); });
+})();
+</script>
 <script src="data.js"></script>
 <script src="evidence.js"></script>
 <script type="module">
@@ -231,14 +276,30 @@ try {   // evidence and session notes come from MongoDB Atlas through a small re
 } catch (e) { /* fall back */ }
 if (!Object.keys(NOTES).length) { try { NOTES = (await (await fetch('explainers.json')).json()).notes || {}; } catch (e) { /* no notes */ } }
 const $ = (id) => document.getElementById(id);
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FS = D.traceFs, T0 = D.traceStart, T1 = 8.0, CUE = D.cueAt, IM0 = D.imageryFrom, IM1 = D.imageryTo;
 const pct = (x) => Math.round(x * 100);
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let tryActive = false;
+
+/* hero number counts up once */
+(() => {
+  const m = document.querySelector('.mega'); if (!m || reduce) return;
+  const t0 = performance.now();
+  (function f(n) { const k = Math.min(1, (n - t0) / 1100); m.textContent = Math.round(12 * (1 - Math.pow(1 - k, 3))) + 'M'; if (k < 1) requestAnimationFrame(f); })(t0);
+})();
+
+/* captions on the arm follow the section in view; during the demo they flash with each answer */
+const armCol = $('armCol');
+let flashTimer = 0;
+const setStep = (s) => { armCol.dataset.step = s; };
+const stepObs = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting && !tryActive) setStep(e.target.id); }), { threshold: 0.5 });
+document.querySelectorAll('.text section').forEach((s) => stepObs.observe(s));
+function flashAnswer() { setStep('answer'); clearTimeout(flashTimer); flashTimer = setTimeout(() => setStep('try'), 2600); }
 
 /* ---------- arm ---------- */
 let arm = null;
 const tgt = { left: 0, right: 0, pl: 0, pr: 0 }, cur = { left: 0, right: 0 };
-let tryActive = false;
 try {
   arm = await createArm($('stage'), { base: 'assets/anatomy/', background: 0x0D0D0D, onProgress: (f) => { $('load').textContent = 'Loading anatomy ' + pct(f) + '%'; } });
   $('load').remove();
@@ -413,7 +474,7 @@ function decide() {
   $('lTxt').textContent = 'reads ' + det.toUpperCase() + ', ' + conf(Math.max(t.pLeft, 1 - t.pLeft)) + '% sure';
   const moved = mode === 'protocol' ? (ok ? det : null) : det;
   say(mode === 'protocol' ? (ok ? 'read_' + det : 'no_match') : (ok ? 'read_' + det : 'wrong_hand'));
-  if (moved) { tgt[moved] = 1; tgt[moved === 'left' ? 'pl' : 'pr'] = 1; }
+  if (moved) { tgt[moved] = 1; tgt[moved === 'left' ? 'pl' : 'pr'] = 1; flashAnswer(); }
   $('note').textContent = mode === 'protocol'
     ? (ok ? 'Match: the ' + det + ' hand closes and gets a stimulation pulse.' : 'No match (the cue was ' + instr(t).toUpperCase() + '): no feedback, as in the recorded therapy.')
     : (ok ? 'Correct: the ' + det + ' hand moves.' : 'Wrong guess: the ' + det.toUpperCase() + ' hand moves, but ' + instr(t).toUpperCase() + ' was intended.');
