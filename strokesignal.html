@@ -7,20 +7,22 @@
 <meta name="description" content="A stroke patient tries to move a hand and nothing answers. strokesignal reads the attempt from EEG and answers it, using recordings from three stroke patients.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Literata:opsz,wght@7..72,400..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Anton&display=swap" rel="stylesheet">
 <script type="importmap">
 { "imports": { "three": "./assets/vendor/three/build/three.module.js", "three/addons/": "./assets/vendor/three/examples/jsm/" } }
 </script>
 <style>
   :root {
-    --seamless: #AEBBC0; --ink: #15222B; --bone: #EDE4D0; --muscle: #7B2D2B;
+    --field: #FF4B1F; --seamless: #0D0D0D; --ink: #0D0D0D; --bone: #EDE4D0; --muscle: #7B2D2B; --cream: #FFF4E6;
     --paper: #F7F1EC; --rose: #E9B9B6; --stim: #F2A93B;
-    --serif: Literata, Georgia, "Times New Roman", serif;
+    --serif: Anton, Impact, "Arial Narrow", sans-serif;
     --sans: Archivo, "Segoe UI", Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--seamless); color: var(--ink); font: 400 19px/1.6 var(--serif); }
+  body { margin: 0; background: var(--field); color: var(--ink); font: 500 19px/1.55 var(--sans); }
+  .mega { font: 400 clamp(6.5rem, 12vw, 12rem)/.82 var(--serif); letter-spacing: -0.02em; margin: 0 0 .06em -.04em; }
+  body.judge .mega { font-size: clamp(4rem, 8vw, 7rem); }
   a { color: var(--ink); text-underline-offset: 3px; }
   a:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
@@ -29,7 +31,7 @@
   .figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 22px; margin: 1.2em 0 .4em; max-width: 36rem; }
   .figures .figure { display: block; font-size: 2.6em; }
   .figures span.cap { display: block; font: 500 15px/1.35 var(--sans); margin-top: 4px; }
-  a.go { display: inline-block; align-self: flex-start; font: 600 17px var(--sans); color: var(--bone); background: var(--ink); padding: 12px 20px; border-radius: 2px; text-decoration: none; margin-top: .6em; min-height: 44px; }
+  a.go { display: inline-block; align-self: flex-start; font: 600 17px var(--sans); color: var(--cream); background: var(--ink); padding: 14px 24px; border-radius: 0; text-decoration: none; margin-top: .6em; min-height: 44px; }
   @media (min-width: 901px) {
     body[data-layout="b"] .wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 40rem); }
     body[data-layout="b"] .arm { order: -1; }
@@ -49,18 +51,18 @@
   .arm { position: sticky; top: 0; height: 100vh; background: var(--seamless); }
   .arm .stage { position: absolute; inset: 0; }
   .arm canvas { display: block; touch-action: pan-y; }
-  .arm .names { position: absolute; left: 0; right: 0; bottom: 5vh; display: grid; grid-template-columns: 1fr 1fr; text-align: center; font: 500 16px var(--sans); font-stretch: 100%; pointer-events: none; }
-  .arm .load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 500 16px var(--sans); }
+  .arm .names { position: absolute; left: 0; right: 0; bottom: 5vh; display: grid; grid-template-columns: 1fr 1fr; text-align: center; font: 500 16px var(--sans); font-stretch: 100%; pointer-events: none; color: var(--cream); }
+  .arm .load { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 500 16px var(--sans); color: var(--cream); }
 
   section { min-height: 78vh; display: flex; flex-direction: column; justify-content: center; padding-block: 9vh; }
   section.first { min-height: 100vh; }
-  h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.12; margin: 0 0 .6em; letter-spacing: -0.01em; font-optical-sizing: auto; }
-  h1 { font-size: clamp(2.3rem, 4.6vw, 3.5rem); }
-  h2 { font-size: clamp(1.7rem, 3vw, 2.2rem); }
+  h1, h2 { font-family: var(--serif); font-weight: 400; line-height: 1.03; margin: 0 0 .5em; letter-spacing: 0; text-transform: uppercase; }
+  h1 { font-size: clamp(2rem, 3.6vw, 3.3rem); }
+  h2 { font-size: clamp(1.9rem, 3.2vw, 2.8rem); }
   p { margin: 0 0 1em; max-width: 34rem; }
   .small { font-size: 15px; line-height: 1.5; }
   .lede { font-size: 1.15em; }
-  .figure { font: 700 3.1em/1 var(--sans); font-stretch: 62%; letter-spacing: 0; }
+  .figure { font: 400 3.4em/1 var(--serif); letter-spacing: 0; }
   .num { font-family: var(--sans); font-stretch: 75%; font-weight: 700; }
   .src { font: 400 14px/1.45 var(--sans); }
 
@@ -84,7 +86,7 @@
   .dots { display: flex; flex-wrap: wrap; gap: 3px; margin: 8px 0 14px; }
   .dot { width: 9px; height: 9px; background: transparent; border: 1px solid var(--ink); }
   .dot.good { background: var(--ink); }
-  .dot.bad { background: var(--muscle); border-color: var(--muscle); }
+  .dot.bad { background: var(--cream); border-color: var(--ink); }
   .dot.now { outline: 2px solid var(--ink); outline-offset: 1px; }
 
   table { border-collapse: collapse; font: 500 15px var(--sans); width: 100%; margin: 6px 0 12px; }
@@ -120,10 +122,10 @@
 <div class="wrap">
   <div class="text">
     <section class="first" id="attempt">
-      <h1>Twelve million times a year, a brain says move, and nothing answers.</h1>
+      <div class="mega" aria-hidden="true">12M</div>
+      <h1>Strokes a year. Each one a brain saying move, and nothing answers.</h1>
       <p class="lede">strokesignal is the first simulated BCI stroke rehab. It reads the attempt from a stroke patient's EEG, and the arm answers.</p>
-      <div class="figures">
-        <div><span class="figure">12M</span><span class="cap">new strokes worldwide, every year</span></div>
+      <div class="figures" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
         <div><span class="figure">40 s</span><span class="cap">between strokes in the US</span></div>
         <div><span class="figure">94%</span><span class="cap">right when it is sure, on brains it never saw</span></div>
       </div>
@@ -238,7 +240,7 @@ let arm = null;
 const tgt = { left: 0, right: 0, pl: 0, pr: 0 }, cur = { left: 0, right: 0 };
 let tryActive = false;
 try {
-  arm = await createArm($('stage'), { base: 'assets/anatomy/', background: 0xAEBBC0, onProgress: (f) => { $('load').textContent = 'Loading anatomy ' + pct(f) + '%'; } });
+  arm = await createArm($('stage'), { base: 'assets/anatomy/', background: 0x0D0D0D, onProgress: (f) => { $('load').textContent = 'Loading anatomy ' + pct(f) + '%'; } });
   $('load').remove();
   if (innerWidth <= 900) arm.controls.enabled = false;
 } catch (e) {
