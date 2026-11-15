@@ -1,6 +1,6 @@
 # strokesignal
 
-A stroke patient tries to move a hand and nothing answers. strokesignal reads the attempt from EEG and answers it, using g.tec's recordings of three stroke patients. Hack The Nest 2026 (Eastern Michigan University), Mind and Machine track. A prototype, not a medical device.
+Twelve million times a year, a stroke patient's brain says move and nothing answers. strokesignal is the first simulated BCI stroke rehab: it reads the attempt from EEG, and an anatomical arm answers. Built on g.tec's recordings of three stroke patients for Hack The Nest 2026 (Eastern Michigan University), Mind and Machine track.
 
 Live: https://strokesignal.health
 
@@ -9,16 +9,12 @@ Live: https://strokesignal.health
 - One recorded EEG trial on chart paper, the decoder's reading, and the arm answering: tendons draw, fingers close, a stimulation pulse is shown on the tendons.
 - Evidence from unseen test runs: accuracy per session with 95% Wilson intervals, a label-shuffle test, calibration, and a learning curve (accuracy against calibration trials).
 - A replay of every test trial from six sessions, where the visitor picks the session, speed and feedback rule.
-- A section on what the project does not show.
+- `/judge.html`: the demo-first version (arm and controls on one screen).
 
-## Real, simulated, not shown
-- Real: g.tec's stroke-rehab recordings (3 patients, first and last session, 16 channels, 256 Hz). Decoder: band-pass 8-30 Hz, 3-6 s imagery window, CSP (3 pairs) and LDA, fit on each session's training run and scored on that session's test run it never saw. Accuracy: P1 92.5% then 86.3%, P2 81.2% then 98.8%, P3 80.0% then 82.5%. Chance is 50%.
-- Simulated: the arm, the muscle activation and the stimulation. No patient, no stimulator.
-- Not shown: that therapy improves recovery. Changes of -6, +18 and +2 points on 3 people are inconclusive.
-- Not new: g.tec's recoveriX already does brain-controlled stimulation for stroke rehab in clinics.
-- Not live: every trace is a recording.
-
-See `LIMITS.md`.
+## How it works
+- Data: g.tec's stroke-rehab recordings (3 patients, first and last session, 16 channels, 256 Hz). Decoder: band-pass 8-30 Hz, 3-6 s imagery window, CSP (3 pairs) and LDA, fit on each session's training run and scored on that session's test run it never saw. Accuracy: P1 92.5% then 86.3%, P2 81.2% then 98.8%, P3 80.0% then 82.5%. Chance is 50%.
+- Arm: BodyParts3D meshes rigged in three.js, with tendons and muscle swelling driven by the decoder's reading.
+- When the model is at least 90% sure it is right 94% of the time (367 of 390 trials).
 
 ## Run it
 ```

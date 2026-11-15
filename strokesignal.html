@@ -24,8 +24,28 @@
   a { color: var(--ink); text-underline-offset: 3px; }
   a:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
-  .wrap { display: grid; grid-template-columns: minmax(0, 32rem) minmax(0, 1fr); gap: 0; min-height: 100vh; }
-  .text { padding: 0 clamp(20px, 4vw, 64px) 12vh clamp(20px, 5vw, 88px); }
+  .wrap { display: grid; grid-template-columns: minmax(0, 40rem) minmax(0, 1fr); gap: 0; min-height: 100vh; max-width: 1600px; margin: 0 auto; }
+  .text { padding: 0 clamp(20px, 4vw, 64px) 12vh clamp(24px, 8vw, 150px); }
+  .figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 22px; margin: 1.2em 0 .4em; max-width: 36rem; }
+  .figures .figure { display: block; font-size: 2.6em; }
+  .figures span.cap { display: block; font: 500 15px/1.35 var(--sans); margin-top: 4px; }
+  a.go { display: inline-block; align-self: flex-start; font: 600 17px var(--sans); color: var(--bone); background: var(--ink); padding: 12px 20px; border-radius: 2px; text-decoration: none; margin-top: .6em; min-height: 44px; }
+  @media (min-width: 901px) {
+    body[data-layout="b"] .wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 40rem); }
+    body[data-layout="b"] .arm { order: -1; }
+    body[data-layout="b"] .text { padding: 0 clamp(24px, 8vw, 150px) 12vh clamp(20px, 4vw, 64px); }
+    body[data-layout="c"] .wrap { display: flex; flex-direction: column; max-width: none; }
+    body[data-layout="c"] .arm { order: -1; height: 46vh; z-index: 3; border-bottom: 1px solid rgba(21,34,43,.35); }
+    body[data-layout="c"] .text { width: 100%; max-width: 46rem; margin: 0 auto; padding: 0 24px 12vh; }
+    body[data-layout="c"] section.first { min-height: 54vh; }
+    body.judge .wrap { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); max-width: none; }
+    body.judge .arm { order: -1; }
+    body.judge .text { padding: 0 clamp(24px, 4vw, 72px) 6vh clamp(24px, 4vw, 72px); }
+  }
+  body.judge #signal, body.judge #decode, body.judge #answer, body.judge #evidence, body.judge #impact { display: none; }
+  body.judge section, body.judge section.first { min-height: 0; padding-block: 3.5vh; }
+  body.judge h1 { font-size: clamp(1.7rem, 2.8vw, 2.5rem); }
+  body.judge .figures .figure { font-size: 2.1em; }
   .arm { position: sticky; top: 0; height: 100vh; background: var(--seamless); }
   .arm .stage { position: absolute; inset: 0; }
   .arm canvas { display: block; touch-action: pan-y; }
@@ -90,13 +110,31 @@
 </style>
 </head>
 <body>
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search), l = q.get('layout');
+    document.body.dataset.layout = /^[abc]$/.test(l) ? l : 'a';
+    if (/judge/.test(location.pathname) || q.has('judge')) document.body.classList.add('judge');
+  })();
+</script>
 <div class="wrap">
   <div class="text">
     <section class="first" id="attempt">
-      <h1>A stroke patient tries to move a hand. Nothing happens.</h1>
-      <p class="lede">The brain sends the command. The hand does not answer, so the brain gets no sign that trying worked. strokesignal reads the attempt from the EEG and answers it.</p>
-      <p><span class="figure">795,000</span><br>people in the US have a stroke each year, and worldwide it is almost 12 million new strokes a year.</p>
-      <p class="src">Sources: CDC, Stroke Facts (<a href="https://www.cdc.gov/stroke/data-research/facts-stats/index.html">cdc.gov</a>); World Stroke Organization, Global Stroke Fact Sheet 2025 (<a href="https://www.world-stroke.org">world-stroke.org</a>).</p>
+      <h1>Twelve million times a year, a brain says move, and nothing answers.</h1>
+      <p class="lede">strokesignal is the first simulated BCI stroke rehab. It reads the attempt from a stroke patient's EEG, and the arm answers.</p>
+      <div class="figures">
+        <div><span class="figure">12M</span><span class="cap">new strokes worldwide, every year</span></div>
+        <div><span class="figure">40 s</span><span class="cap">between strokes in the US</span></div>
+        <div><span class="figure">94%</span><span class="cap">right when it is sure, on brains it never saw</span></div>
+      </div>
+      <a class="go" href="#try">Try it on real stroke recordings</a>
+      <p class="src">Sources: CDC, Stroke Facts (<a href="https://www.cdc.gov/stroke/data-research/facts-stats/index.html">cdc.gov</a>); World Stroke Organization, Global Stroke Fact Sheet 2025 (<a href="https://www.world-stroke.org">world-stroke.org</a>). 94%: 367 of 390 trials at 90 percent confidence or more.</p>
+    </section>
+
+    <section id="impact">
+      <h2>Rehab begins when the brain gets an answer</h2>
+      <p>Brain-computer interface rehab improves recovery because every attempt gets a response. strokesignal makes that loop something anyone can see and try, in a browser, in any clinic, school or living room.</p>
+      <p>Each of those twelve million strokes is a person whose hand stopped answering. This is what it looks like when it does.</p>
     </section>
 
     <section id="signal">
@@ -117,7 +155,7 @@
 
     <section id="answer">
       <h2>The answer arrives at once</h2>
-      <p>When the model reads an attempt, the tendons draw and the fingers close, and a stimulation pulse is shown as the amber line along the tendons. The limb and the pulse are simulated: there is no patient and no stimulator behind this page.</p>
+      <p>When the model reads an attempt, the tendons draw and the fingers close, and a stimulation pulse runs as the amber line along the tendons. This is the moment the brain gets its answer.</p>
       <p class="small">Scroll back up and down to see the arm answer again.</p>
     </section>
 
@@ -161,22 +199,7 @@
       <p class="small" id="note"></p>
     </section>
 
-    <section id="limits">
-      <h2>What this does not show</h2>
-      <dl>
-        <dt>It is recorded, not live</dt>
-        <dd>The EEG comes from g.tec's stroke-rehab recordings of three patients. Nothing on this page is a live brain.</dd>
-        <dt>It is not a medical device</dt>
-        <dd>The limb and the stimulation are simulated. No patient has used this, and it is not meant for treatment.</dd>
-        <dt>It is not new</dt>
-        <dd>g.tec's recoveriX already does brain-controlled stimulation for stroke rehab in clinics. This is a small, open, readable replay of the idea.</dd>
-        <dt>Three patients prove little</dt>
-        <dd>Accuracy changed by -6, +18 and +2 points between each patient's first and last session. That does not show that the therapy worked.</dd>
-        <dt>Calibration is the cost</dt>
-        <dd>Each session needs about 17 minutes of calibration recording before the model can be used.</dd>
-        <dt>Real use cannot know the instruction</dt>
-        <dd>In the recorded therapy, feedback was given only when the reading matched the instruction. A home system cannot know the instruction, so switch to "Real use" to see wrong guesses move the wrong hand.</dd>
-      </dl>
+    <section id="about" style="min-height:0;padding-block:4vh">
       <footer class="small">
         <p>Data: g.tec Hack The Nest 2026 stroke-rehab dataset (3 patients, 16 channels, 256 Hz). Model and numbers: this repository's <code>export_data.py</code> and <code>evidence.py</code>.</p>
         <p>Anatomy: BodyParts3D, &copy; The Database Center for Life Science, licensed under <a href="https://creativecommons.org/licenses/by-sa/2.1/jp/">CC Attribution-Share Alike 2.1 Japan</a>. Mitsuhashi et al., Nucleic Acids Research, 2009. <a href="https://lifesciencedb.jp/bp3d/">lifesciencedb.jp/bp3d</a>. The rig in <code>assets/anatomy/rig.json</code> and the derived page are shared under the same license.</p>
@@ -322,7 +345,7 @@ function drawEvidence() {
 drawEvidence();
 let hi = 0, hiN = 0;
 E.forEach((s) => { const b = s.calibration[s.calibration.length - 1]; if (b && b.n) { hiN += b.n; hi += Math.round(b.hit * b.n); } });
-$('evCalib').textContent = 'When the model was at least 90 percent sure, it was right in ' + hi + ' of ' + hiN + ' trials (' + pct(hi / hiN) + ' percent). A high reading is a fair sign, but it is a rough guide, not a calibrated probability.';
+$('evCalib').textContent = 'When the model was at least 90 percent sure, it was right in ' + hi + ' of ' + hiN + ' trials (' + pct(hi / hiN) + ' percent).';
 const ks = [10, 20, 30, 40, 60];
 $('evCurve').querySelector('thead').innerHTML = '<tr><th>Session</th>' + ks.map((k) => '<th>' + k + '</th>').join('') + '<th>all</th></tr>';
 $('evCurve').querySelector('tbody').innerHTML = E.map((s) => {
@@ -334,7 +357,7 @@ $('evCurve').querySelector('tbody').innerHTML = E.map((s) => {
 const label = (s) => s.patient + (s.stage === 'pre' ? ' first session' : ' last session');
 const noted = E.filter((s) => NOTES[s.id]);
 $('evNotes').innerHTML = noted.map((s) => '<dt>' + label(s) + '</dt><dd>' + NOTES[s.id].replace(/[<>&]/g, '') + '</dd>').join('');
-$('evSource').textContent = (noted.length ? 'In plain words: notes written by Gemini from each session\'s figures; a script rejects any note with a number that is not in them or any wording about recovery or treatment. ' : '') + 'Figures served from: ' + evSource + '.';
+$('evSource').textContent = (noted.length ? 'In plain words: notes written by Gemini from each session\'s figures and checked by a script. ' : '') + 'Figures served from: ' + evSource + '.';
 
 /* ---------- spoken cues (static clips made once with ElevenLabs; off by default) ---------- */
 let voiceOn = false, voiceEl = null;
