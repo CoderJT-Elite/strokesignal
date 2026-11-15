@@ -129,6 +129,8 @@
       <p id="evCalib"></p>
       <table id="evCurve"><thead></thead><tbody></tbody></table>
       <p class="src">Accuracy on the test run when only the first k calibration trials are used.</p>
+      <dl id="evNotes"></dl>
+      <p class="src" id="evSource"></p>
     </section>
 
     <section id="try">
@@ -194,7 +196,14 @@
 <script src="evidence.js"></script>
 <script type="module">
 import { createArm } from './arm.js';
-const D = window.STROKE_DATA, EV = window.EVIDENCE;
+const D = window.STROKE_DATA;
+let EV = window.EVIDENCE, NOTES = {}, evSource = 'bundled copy';
+try {   // evidence and session notes come from MongoDB Atlas through a small read-only API; the bundled copy is the fallback
+  const ctl = new AbortController(); setTimeout(() => ctl.abort(), 4000);
+  const r = await fetch('api/evidence', { signal: ctl.signal });
+  if (r.ok) { const j = await r.json(); if (j.sessions && j.sessions.length === 6) { EV = j; NOTES = j.notes || {}; evSource = 'MongoDB Atlas'; } }
+} catch (e) { /* fall back */ }
+if (!Object.keys(NOTES).length) { try { NOTES = (await (await fetch('explainers.json')).json()).notes || {}; } catch (e) { /* no notes */ } }
 const $ = (id) => document.getElementById(id);
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const FS = D.traceFs, T0 = D.traceStart, T1 = 8.0, CUE = D.cueAt, IM0 = D.imageryFrom, IM1 = D.imageryTo;
@@ -321,6 +330,11 @@ $('evCurve').querySelector('tbody').innerHTML = E.map((s) => {
   const all = s.learning_curve[s.learning_curve.length - 1];
   return '<tr><td>' + s.patient + (s.stage === 'pre' ? ' first' : ' last') + '</td>' + ks.map((k) => '<td>' + (m[k] != null ? pct(m[k]) : '-') + '</td>').join('') + '<td>' + pct(all.accuracy) + ' (' + all.trials + ')</td></tr>';
 }).join('');
+
+const label = (s) => s.patient + (s.stage === 'pre' ? ' first session' : ' last session');
+const noted = E.filter((s) => NOTES[s.id]);
+$('evNotes').innerHTML = noted.map((s) => '<dt>' + label(s) + '</dt><dd>' + NOTES[s.id].replace(/[<>&]/g, '') + '</dd>').join('');
+$('evSource').textContent = (noted.length ? 'In plain words: notes written by Gemini from each session\'s figures; a script rejects any note with a number that is not in them or any wording about recovery or treatment. ' : '') + 'Figures served from: ' + evSource + '.';
 
 /* ---------- spoken cues (static clips made once with ElevenLabs; off by default) ---------- */
 let voiceOn = false, voiceEl = null;

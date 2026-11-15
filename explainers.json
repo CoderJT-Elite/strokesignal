@@ -1,0 +1,12 @@
+{
+ "model": "gemini-3.1-flash-lite",
+ "note": "Written by Gemini from each session's figures; numbers and wording checked by explain.py.",
+ "notes": {
+  "P1_pre": "During the first session for P1, the decoder achieved 92.5 percent accuracy, which means it correctly identified the intended signal 74 out of 80 test trials. The statistical 95 percent confidence interval for this performance is 84.6 to 96.5.",
+  "P1_post": "During the last session for P1, the decoder correctly identified 69 out of 80 test trials, which corresponds to an accuracy of 86.3 percent. This percentage indicates that the system predicted the intended signal correctly more often than a random guess, with a 95 percent interval of 77.0 to 92.1 percent.",
+  "P2_pre": "In the first session for P2, the decoder correctly identified 65 out of 80 test trials for an accuracy of 81.2 percent. This accuracy means the system correctly predicted the intended brain signal 81.2 percent of the time, with a 95 percent interval of 71.3 to 88.3.",
+  "P2_post": "In the last session for patient P2, the decoder correctly identified 79 out of 80 test trials, which corresponds to an accuracy of 98.8 percent. This result means the system performed correctly nearly every time it was tested, with a 95 percent confidence interval ranging from 93.3 to 99.8 percent.",
+  "P3_pre": "During the first session for P3, the decoder achieved 80.0 percent accuracy, which means it correctly identified the intended signal in 64 out of 80 test trials. This accuracy level, which is above the 50 percent chance rate, falls within a 95 percent interval of 70.0 to 87.3 percent.",
+  "P3_post": "In the last session for patient P3, the decoder achieved 82.5 percent accuracy, which means the system correctly identified the intended signal in 66 out of 80 test trials. This performance result falls within a 95 percent interval of 72.7 to 89.3 percent."
+ }
+}

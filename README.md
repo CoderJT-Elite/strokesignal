@@ -12,7 +12,7 @@ Live: https://strokesignal.health
 - A section on what the project does not show.
 
 ## Real, simulated, not shown
-- Real: g.tec's stroke-rehab recordings (3 patients, first and last session, 16 channels, 256 Hz). Decoder: band-pass 8-30 Hz, 3-6 s imagery window, CSP (3 pairs) and LDA, fit on each session's training run and scored on that session's test run it never saw. Accuracy: P1 92.5% then 86.2%, P2 81.2% then 98.8%, P3 80.0% then 82.5%. Chance is 50%.
+- Real: g.tec's stroke-rehab recordings (3 patients, first and last session, 16 channels, 256 Hz). Decoder: band-pass 8-30 Hz, 3-6 s imagery window, CSP (3 pairs) and LDA, fit on each session's training run and scored on that session's test run it never saw. Accuracy: P1 92.5% then 86.3%, P2 81.2% then 98.8%, P3 80.0% then 82.5%. Chance is 50%.
 - Simulated: the arm, the muscle activation and the stimulation. No patient, no stimulator.
 - Not shown: that therapy improves recovery. Changes of -6, +18 and +2 points on 3 people are inconclusive.
 - Not new: g.tec's recoveriX already does brain-controlled stimulation for stroke rehab in clinics.
@@ -51,3 +51,14 @@ py -I -m pytest -q
 ## Sources for the numbers on the page
 - CDC, Stroke Facts: more than 795,000 strokes a year in the US.
 - World Stroke Organization, Global Stroke Fact Sheet 2025: almost 12 million new strokes a year worldwide.
+
+## AI tools used, and how (Hack The Nest asks for this)
+- Claude Code (Anthropic) wrote most of the code in this repository under John's direction: the decoder export, the evidence script, the rigged arm, the page, the server setup and the tests. John chose the project, set the honesty rules and reviewed the results.
+- Gemini (`explain.py`) writes a two-sentence plain-language note per session from that session's figures. A script rejects any note containing a number that is not in those figures or any wording about recovery or treatment.
+- ElevenLabs (`make_audio.py`) generated six spoken cue clips once; they are static files.
+- No AI tool touched the decoder's numbers: they come from `evidence.py` on g.tec's recordings, and `test_evidence.py` checks them.
+
+## Services
+- MongoDB Atlas: `seed_atlas.py` loads the evidence and notes; `api.py` serves them read-only to the page (`/api/evidence`). The page falls back to bundled copies if the API is down.
+- Vultr: serves the site and the API behind nginx with HTTPS.
+- Keys live in git-ignored `.env`, `.env.local` and `atlas-credentials.env` and are never sent to a browser.
